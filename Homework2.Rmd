@@ -5,29 +5,69 @@ date: "`r Sys.Date()`"
 output: github_document
 ---
 
-# Load the packages
+```{r setup, echo = FALSE, cache = FALSE, message = FALSE}
+rm(list = ls())
+library(knitr)
+## Global options
+opts_chunk$set(echo      = TRUE,
+	             cache     = TRUE,
+               prompt    = FALSE,
+               tidy      = FALSE,
+               comment   = NA,
+               message   = FALSE,
+               warning   = FALSE,
+               dpi       = 150,
+               fig.width = 4, 
+               fig.asp   = 5/7,
+               fig.align = "center")
+# attr.source = '.numberLines'
+```
+
+# Load libraries
 
 ```{r}
 library(tidyverse)
 library(dplyr)
-
+library(readxl)
 ```
 
 
 # Problem 1
 
-```{r}
-pm_df =
+We clean the 538 `pols` data, which provides information on the number of national politicians who are democratic or republican at any given time. There are some values for which `prez_gop` is `2` -- these are months in which Ford became President following Nixon's resignation. In the new `president` variable created as part of our data cleaning, we code these as `rep`` (same as values when `prez_gop` is `1`).
+
+prez_gop: indicator of whether the president was republican on the associated date (1 = yes, 0 = no)
+gov_gop: the number of republican governors on the associated date
+sen_gop: the number of republican senators on the associated date
+rep_gop: the number of republican representatives on the associated date
+prez_dem: indicator of whether the president was democratic on the associated date (1 = yes, 0 = no)
+gov_dem: the number of democratic governors on the associated date
+sen_dem: the number of democratic senators on the associated date
+rep_dem: the number of democratic representatives on the associated date
+
+# First step
+
+```{r clean_538_pols}
+month_df = 
+  tibble(
+    month_num = 1:12,
+    month_abb = month.abb,
+    month = month.name
+  )
+
+pm_df = 
   read_csv("./data/pols-month.csv") |>
-  janitor::clean_names() |>
-  separate(mon, into = c("year", "month","day"), sep = c(4,7))
-
-head(pm_df)
-
-
-
-
+  separate(mon, into = c("year", "month_num", "day"), convert = TRUE) |>
+  mutate(
+    president = recode(prez_gop, "0" = "dem", "1" = "rep", "2" = "rep")) |>
+  left_join(x = _, y = month_df) |> 
+  select(year, month, everything(), -day, -starts_with("prez"),-mouth_num,-mouth_abb)  
 ```
+
+
+# Second step
+
+
 
 # Problem 2
 
