@@ -61,7 +61,7 @@ pm_df =
   mutate(
     president = recode(prez_gop, "0" = "dem", "1" = "rep", "2" = "rep")) |>
   left_join(x = _, y = month_df) |> 
-  select(year, month, everything(), -day, -starts_with("prez"),-mouth_num,-mouth_abb)  
+  select(year, month, everything(), -day, -starts_with("prez"))  
 ```
 
 
@@ -77,16 +77,52 @@ snp_df =
 
 ```
 
+# Third step
+
+Finally, we tidy the `unemployment` data so that it can be merged with the `pols` and `snp` datasets.
+
+```{r clean_unemp}
+unemployment = 
+  read_csv("./data/unemployment.csv") |>
+  rename(year = Year) |>
+  pivot_longer(
+    Jan:Dec, 
+    names_to = "month_abb",
+    values_to = "unemployment"
+  ) |> 
+  left_join(x = _, y = month_df) |> 
+  select(year, month, unemployment)
+```
+
+
+# Last step
+
+
+Now we merge the three datasets!
+
+```{r merge}
+data= 
+  left_join(pm_df, snp_df) |>
+  left_join(x = _, y = unemployment)
+
+str(data)
+
+```
+
+So the pols_month dataset contains the information of presidents, governors, senators, and representatives from Republican and Democratic during different periods. 
+
+The snp dataset contains the Standard & Poor’s stock market index during different periods. 
+
+The unemployment dataset contains the unemployment rate in the US during different periods. 
+
+The period of the dataset is from 1947 to 2015. The size of the merged dataset is 822 x 12.
+
 
 # Problem 2
 
 ### Read and clean the Mr. Trash Wheel sheet
 
-```{r}
-Mr_df = 
 
-
-```
 
 
 
