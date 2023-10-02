@@ -67,6 +67,15 @@ pm_df =
 
 # Second step
 
+```{r load `snp.csv`}
+snp_df = 
+  read_csv("./data/snp.csv") |>
+  separate(date, into = c("month", "day", "year"), convert = TRUE) |>
+  arrange(year, month) |>
+  mutate(month = month.name[month],year = ifelse(year>=50, 1900+year, 2000+year)) |> 
+  select(year, month, close) 
+
+```
 
 
 # Problem 2
