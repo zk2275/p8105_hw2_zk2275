@@ -122,7 +122,38 @@ The period of the dataset is from 1947 to 2015. The size of the merged dataset i
 
 ### Read and clean the Mr. Trash Wheel sheet
 
+```{r}
+# load the dataset, change the format of date, recalculate homes_powered
+mr_trash_wheel_df = 
+  readxl::read_excel("./data/202309TWCD.xlsx", sheet = "Mr. Trash Wheel", range = "A2:N586")|>
+  drop_na(dumpster) |> # omit rows that do not include dumpster-specific data
+  janitor::clean_names()|>
+  mutate(
+    date = substr(date, nchar(date) - 1, nchar(date))
+  )|>
+  mutate(
+    homes_powered = (weight_tons*500/30)
+  )|>
+  mutate(name = "Mr_trash_wheel")
+mr_trash_wheel_df
+```
 
+
+
+```{r}
+professor_trash_wheel_df = 
+  readxl::read_excel("HW2_P2_DATA/202207 Trash Wheel Collection Data.xlsx", sheet = "Professor Trash Wheel", range = "A2:M96")|>
+  janitor::clean_names()|>
+  mutate(
+    date = substr(date, nchar(date) - 1, nchar(date))
+  )|>
+  mutate(
+    homes_powered = (weight_tons*500/30), 
+    year = as.character(year)
+  )|>
+  mutate(name = "Professor_trash_wheel")
+professor_trash_wheel_df
+```
 
 
 
