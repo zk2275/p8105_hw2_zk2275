@@ -1,7 +1,7 @@
 Homework2
 ================
 Zhuodiao Kuang
-2023-10-01
+2023-10-03
 
 # Load libraries
 
@@ -121,3 +121,130 @@ dataset is 822 x 12.
 # Problem 2
 
 ### Read and clean the Mr. Trash Wheel sheet
+
+``` r
+# load the dataset, change the format of date, recalculate homes_powered
+mr_trash_wheel_df = 
+  readxl::read_excel("./data/202309TWCD.xlsx", sheet = "Mr. Trash Wheel", range = "A2:M586")|>
+  janitor::clean_names()|>
+  drop_na(dumpster) |> # omit rows that do not include dumpster-specific data
+  mutate(
+    date = substr(date, nchar(date) - 1, nchar(date)),
+    year = as.character(year), # alter the type of year
+    homes_powered = (weight_tons*500/30),
+    name = "Mr_trash_wheel")|># add a column to specify
+  rename(day = date)|>
+  select(dumpster,name,month,year,day,everything())
+head(mr_trash_wheel_df)
+```
+
+    # A tibble: 6 × 15
+      dumpster name           month year  day   weight_tons volume_cubic_yards
+         <dbl> <chr>          <chr> <chr> <chr>       <dbl>              <dbl>
+    1        1 Mr_trash_wheel May   2014  16           4.31                 18
+    2        2 Mr_trash_wheel May   2014  16           2.74                 13
+    3        3 Mr_trash_wheel May   2014  16           3.45                 15
+    4        4 Mr_trash_wheel May   2014  17           3.1                  15
+    5        5 Mr_trash_wheel May   2014  17           4.06                 18
+    6        6 Mr_trash_wheel May   2014  20           2.71                 13
+    # ℹ 8 more variables: plastic_bottles <dbl>, polystyrene <dbl>,
+    #   cigarette_butts <dbl>, glass_bottles <dbl>, plastic_bags <dbl>,
+    #   wrappers <dbl>, sports_balls <dbl>, homes_powered <dbl>
+
+### Use a similar process to import, clean, and organize the data for Professor Trash Wheel and Gwynnda.
+
+``` r
+prof_trash_wheel_df = 
+  readxl::read_excel("./data/202309TWCD.xlsx", sheet = "Professor Trash Wheel", range = "A2:M108")|> 
+  janitor::clean_names() |> # use reasonable variable names
+  drop_na(dumpster) |> # omit rows that do not include dumpster-specific data
+  mutate(homes_powered = weight_tons * 500 / 30,
+         date = substr(date, nchar(date) - 1, nchar(date)),
+         year = as.character(year), # alter the type of year
+         name = "Professory")|>
+  rename(day = date)|>
+  select(dumpster,name,month,year,day,everything())
+head(prof_trash_wheel_df)
+```
+
+    # A tibble: 6 × 14
+      dumpster name       month    year  day   weight_tons volume_cubic_yards
+         <dbl> <chr>      <chr>    <chr> <chr>       <dbl>              <dbl>
+    1        1 Professory January  2017  02           1.79                 15
+    2        2 Professory January  2017  30           1.58                 15
+    3        3 Professory February 2017  26           2.32                 18
+    4        4 Professory February 2017  26           3.72                 15
+    5        5 Professory February 2017  28           1.45                 15
+    6        6 Professory March    2017  30           1.71                 15
+    # ℹ 7 more variables: plastic_bottles <dbl>, polystyrene <dbl>,
+    #   cigarette_butts <dbl>, glass_bottles <dbl>, plastic_bags <dbl>,
+    #   wrappers <dbl>, homes_powered <dbl>
+
+``` r
+gwy_trash_wheel_df = 
+  readxl::read_excel("./data/202309TWCD.xlsx", sheet = "Gwynnda Trash Wheel", range = "A2:J157")|> 
+  janitor::clean_names() |> # use reasonable variable names
+  drop_na(dumpster) |> # omit rows that do not include dumpster-specific data
+  mutate(homes_powered = weight_tons * 500 / 30,
+         date = substr(date, nchar(date) - 1, nchar(date)),
+         year = as.character(year), # alter the type of year
+         name = "Gwynnda")|>
+  rename(day = date)|>
+  select(dumpster,name,month,year,day,everything())
+head(gwy_trash_wheel_df)
+```
+
+    # A tibble: 6 × 12
+      dumpster name    month  year  day   weight_tons volume_cubic_yards
+         <dbl> <chr>   <chr>  <chr> <chr>       <dbl>              <dbl>
+    1        1 Gwynnda July   2021  03           0.93                 15
+    2        2 Gwynnda July   2021  07           2.26                 15
+    3        3 Gwynnda July   2021  07           1.62                 15
+    4        4 Gwynnda July   2021  16           1.76                 15
+    5        5 Gwynnda July   2021  30           1.53                 15
+    6        6 Gwynnda August 2021  11           2.06                 15
+    # ℹ 5 more variables: plastic_bottles <dbl>, polystyrene <dbl>,
+    #   cigarette_butts <dbl>, plastic_bags <dbl>, homes_powered <dbl>
+
+### Then, combine the three datasets.
+
+``` r
+trash_wheel_df = 
+  mr_trash_wheel_df |> 
+  full_join(prof_trash_wheel_df) |> 
+  full_join(gwy_trash_wheel_df) |> 
+  relocate(name) # put the name of the trash wheel front
+head(trash_wheel_df )
+```
+
+    # A tibble: 6 × 15
+      name           dumpster month year  day   weight_tons volume_cubic_yards
+      <chr>             <dbl> <chr> <chr> <chr>       <dbl>              <dbl>
+    1 Mr_trash_wheel        1 May   2014  16           4.31                 18
+    2 Mr_trash_wheel        2 May   2014  16           2.74                 13
+    3 Mr_trash_wheel        3 May   2014  16           3.45                 15
+    4 Mr_trash_wheel        4 May   2014  17           3.1                  15
+    5 Mr_trash_wheel        5 May   2014  17           4.06                 18
+    6 Mr_trash_wheel        6 May   2014  20           2.71                 13
+    # ℹ 8 more variables: plastic_bottles <dbl>, polystyrene <dbl>,
+    #   cigarette_butts <dbl>, glass_bottles <dbl>, plastic_bags <dbl>,
+    #   wrappers <dbl>, sports_balls <dbl>, homes_powered <dbl>
+
+The three given data sets are all related to the total weight and volume
+of the trash, the number of different waste products, the number of the
+dumpster, and the number of households the trash equates to in terms of
+electricity on a given date.
+
+Specifically, the cleaned “Mr. Trash Wheel” data set contains 584
+observations of 15 variables from May, 2014 to June, 2023. The cleaned
+“Professor Trash Wheel” data set contains 106 observations of 14
+variables from January, 2017 to June, 2023. the cleaned “Gwynnda Trash
+Wheel” data set contains 155 observations of 12 variables from July,
+2021 to June, 2023.  
+For the resulting datasheet, it contains 845 observations of 15
+variables, among which the `name` variable marks the trash wheel’s name
+Mr_trash_wheel, Professory), Gwynnda.
+
+It can be concluded that the total weight of trash collected by
+Professor Trash Wheel is 216.26 and the total number of cigarette butts
+collected by Gwynnda in July of 2021 is 16300.

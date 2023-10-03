@@ -125,36 +125,66 @@ The period of the dataset is from 1947 to 2015. The size of the merged dataset i
 ```{r}
 # load the dataset, change the format of date, recalculate homes_powered
 mr_trash_wheel_df = 
-  readxl::read_excel("./data/202309TWCD.xlsx", sheet = "Mr. Trash Wheel", range = "A2:N586")|>
-  drop_na(dumpster) |> # omit rows that do not include dumpster-specific data
+  readxl::read_excel("./data/202309TWCD.xlsx", sheet = "Mr. Trash Wheel", range = "A2:M586")|>
   janitor::clean_names()|>
+  drop_na(dumpster) |> # omit rows that do not include dumpster-specific data
   mutate(
-    date = substr(date, nchar(date) - 1, nchar(date))
-  )|>
-  mutate(
-    homes_powered = (weight_tons*500/30)
-  )|>
-  mutate(name = "Mr_trash_wheel")
-mr_trash_wheel_df
+    date = substr(date, nchar(date) - 1, nchar(date)),
+    year = as.character(year), # alter the type of year
+    homes_powered = (weight_tons*500/30),
+    name = "Mr_trash_wheel")|># add a column to specify
+  rename(day = date)|>
+  select(dumpster,name,month,year,day,everything())
+head(mr_trash_wheel_df)
 ```
 
+### Use a similar process to import, clean, and organize the data for Professor Trash Wheel and Gwynnda.
+
+```{r}
+prof_trash_wheel_df = 
+  readxl::read_excel("./data/202309TWCD.xlsx", sheet = "Professor Trash Wheel", range = "A2:M108")|> 
+  janitor::clean_names() |> # use reasonable variable names
+  drop_na(dumpster) |> # omit rows that do not include dumpster-specific data
+  mutate(homes_powered = weight_tons * 500 / 30,
+         date = substr(date, nchar(date) - 1, nchar(date)),
+         year = as.character(year), # alter the type of year
+         name = "Professory")|>
+  rename(day = date)|>
+  select(dumpster,name,month,year,day,everything())
+head(prof_trash_wheel_df)
+```
 
 
 ```{r}
-professor_trash_wheel_df = 
-  readxl::read_excel("HW2_P2_DATA/202207 Trash Wheel Collection Data.xlsx", sheet = "Professor Trash Wheel", range = "A2:M96")|>
-  janitor::clean_names()|>
-  mutate(
-    date = substr(date, nchar(date) - 1, nchar(date))
-  )|>
-  mutate(
-    homes_powered = (weight_tons*500/30), 
-    year = as.character(year)
-  )|>
-  mutate(name = "Professor_trash_wheel")
-professor_trash_wheel_df
+gwy_trash_wheel_df = 
+  readxl::read_excel("./data/202309TWCD.xlsx", sheet = "Gwynnda Trash Wheel", range = "A2:J157")|> 
+  janitor::clean_names() |> # use reasonable variable names
+  drop_na(dumpster) |> # omit rows that do not include dumpster-specific data
+  mutate(homes_powered = weight_tons * 500 / 30,
+         date = substr(date, nchar(date) - 1, nchar(date)),
+         year = as.character(year), # alter the type of year
+         name = "Gwynnda")|>
+  rename(day = date)|>
+  select(dumpster,name,month,year,day,everything())
+head(gwy_trash_wheel_df)
 ```
 
 
+### Then, combine the three datasets.
+
+```{r}
+trash_wheel_df = 
+  mr_trash_wheel_df |> 
+  full_join(prof_trash_wheel_df) |> 
+  full_join(gwy_trash_wheel_df) |> 
+  relocate(name) # put the name of the trash wheel front
+head(trash_wheel_df )
+```
 
 
+The three given data sets are all related to the total weight and volume of the trash, the number of different waste products, the number of the dumpster, and the number of households the trash equates to in terms of electricity on a given date.  
+
+Specifically, the cleaned "Mr. Trash Wheel" data set contains `r nrow(mr_trash_wheel_df)` observations of `r ncol(mr_trash_wheel_df)` variables from `r paste(mr_trash_wheel_df$month[1], min(mr_trash_wheel_df$year), sep = ", ")` to `r paste(mr_trash_wheel_df$month[nrow(mr_trash_wheel_df)], max(mr_trash_wheel_df$year), sep = ", ")`. The cleaned "Professor Trash Wheel" data set contains `r nrow(prof_trash_wheel_df)` observations of `r ncol(prof_trash_wheel_df)` variables from `r paste(prof_trash_wheel_df$month[1], min(prof_trash_wheel_df$year), sep = ", ")` to `r paste(prof_trash_wheel_df$month[nrow(prof_trash_wheel_df)], max(prof_trash_wheel_df$year), sep = ", ")`. the cleaned "Gwynnda Trash Wheel" data set contains `r nrow(gwy_trash_wheel_df)` observations of `r ncol(gwy_trash_wheel_df)` variables from `r paste(gwy_trash_wheel_df$month[1], min(gwy_trash_wheel_df$year), sep = ", ")` to `r paste(gwy_trash_wheel_df$month[nrow(gwy_trash_wheel_df)], max(gwy_trash_wheel_df$year), sep = ", ")`.  
+For the resulting datasheet, it contains `r nrow(trash_wheel_df)` observations of `r ncol(trash_wheel_df)` variables, among which the `name` variable marks the trash wheel's name `r unique(trash_wheel_df$name)  `.
+
+It can be concluded that the total weight of trash collected by Professor Trash Wheel is `r sum(prof_trash_wheel_df$weight_tons)` and the total number of cigarette butts collected by Gwynnda in July of 2021 is 16300.
