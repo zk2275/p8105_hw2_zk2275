@@ -188,3 +188,85 @@ Specifically, the cleaned "Mr. Trash Wheel" data set contains `r nrow(mr_trash_w
 For the resulting datasheet, it contains `r nrow(trash_wheel_df)` observations of `r ncol(trash_wheel_df)` variables, among which the `name` variable marks the trash wheel's name `r unique(trash_wheel_df$name)  `.
 
 It can be concluded that the total weight of trash collected by Professor Trash Wheel is `r sum(prof_trash_wheel_df$weight_tons)` and the total number of cigarette butts collected by Gwynnda in July of 2021 is 16300.
+
+
+
+# Problem 3
+
+### Import, clean, and tidy the dataset of baseline demographics.
+
+```{r}
+mci_baseline_df = 
+  read_csv("./data_mci/MCI_baseline.csv", skip = 1, # skip the first row
+           na = c(".", "NA")) |> # treat the missing value as NA
+  janitor::clean_names() |> 
+  mutate(
+    sex = case_match(
+      sex,
+      1 ~ "Male",
+      0 ~ "Female"
+    ),
+    apoe4 = case_match(
+      apoe4,
+      1 ~ "APOE4 carrier",
+      0 ~ "APOE4 non-carrier"
+    )
+  ) |> 
+  # the MCI onset happens after baseline
+  filter(current_age < age_at_onset | is.na(age_at_onset) == 1)
+```
+
+For the data cleaning, first I skipped the first row which contains notes for the columns, and treated the missing values as NA for convenience afterwards. The `case_match` step converts the numerical values of the `sex` and `apoe4` variables to their original meanings for readability. In the end, I compared the `current_age` variable and `age_at_onset` variable to ensure the MCI onset happens after baseline. After cleaning, the data set contains  `r nrow(mci_baseline_df)` observations of `r ncol(mci_baseline_df)` variables.  
+From the data set, it could be concluded that `r nrow(mci_baseline_df)` participants in total were recruited, among which `r nrow(mci_baseline_df)` participants met the criteria, and `r sum(is.na(mci_baseline_df$age_at_onset)!=1)` develop MCI. After the participants who do not meet the criteria are removed, the average baseline age is `r round(mean(mci_baseline_df$current_age), 2)`, and `r sum(mci_baseline_df$sex == "Female" & mci_baseline_df$apoe4 == "APOE4 carrier") / sum(mci_baseline_df$sex == "Female") * 100`% of women in the study are APOE4 carriers.  
+
+### Similarly, import, clean, and tidy the dataset of longitudinally observed biomarker values.
+
+```{r}
+mci_amyloid_df = 
+  read_csv("./data_mci/mci_amyloid.csv", skip = 1, # skip the first row
+           na = c("NA", "Na")) |>
+  janitor::clean_names() |> 
+  pivot_longer(
+    baseline:time_8,
+    names_to = "time_in_years",
+    names_prefix = "time_",
+    values_to = "amyloid_beta_42_40_ratio"
+  ) |> 
+  mutate( # change baseline to 0 year
+    time_in_years = replace(time_in_years, time_in_years == "baseline", 0),
+    amyloid_beta_42_40_ratio = as.numeric(amyloid_beta_42_40_ratio)
+  )
+```
+
+For the data cleaning, first I skipped the first row which contains notes for the columns, and treated "Na" and "NA" both as NA values because there is an "Na" value inside the "Baseline" variable. Then I converted the five variables measuring the ratio at a given time into two variables named "time_in_years" and "amyloid_beta_42_40_ratio". After cleaning, the data set contains `r nrow(mci_amyloid_df)` observations of `r ncol(mci_amyloid_df)` variables. The ratio distribution for different years is illustrated below:
+
+```{r}
+mci_amyloid_df |> 
+  ggplot(aes(y = amyloid_beta_42_40_ratio, x = time_in_years)) + 
+  geom_boxplot()
+```
+
+From the boxplot, it could be concluded that as the number of years increases, the ratio tends to drop in overall. 
+
+### Compare the two datasets.
+
+Check whether some participants appear in only the baseline or amyloid datasets.
+
+```{r}
+all_participants_df =
+  mci_baseline_df |> 
+  full_join(mci_amyloid_df, by = join_by(id == study_id),
+            keep = T) # keep both id and study_id for comparision
+```
+
+Then, `r sum(is.na(all_participants_df$id))` participants are only in the amyloid datset, `r sum(is.na(all_participants_df$study_id))` participants are only in the baseline datset.  
+Retain only the participants who appear in both datasets.
+
+```{r}
+both_participants_df = 
+  mci_baseline_df |> 
+  inner_join(mci_amyloid_df, by = join_by(id == study_id))
+write_csv(both_participants_df, "./data_mci/mci_result.csv") # export
+```
+
+The result contains `r nrow(both_participants_df)` observations of `r ncol(both_participants_df)` variables related to the participants' baseline demographics and amyloid $\beta$ 42/40 ratio measured every two years from the baseline to the eighth year. Among the `r length(unique(both_participants_df$id))` participants, `r sum(both_participants_df$sex == "Female") / 5` are female, `r sum(both_participants_df$apoe4 == "APOE4 carrier") / 5` are APOE4 carriers. The average current age at baseline is `r round(mean(both_participants_df$current_age), 2)` (years old), and the average length of education at baseline is `r round(mean(both_participants_df$education), 2)` years.
