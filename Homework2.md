@@ -314,11 +314,7 @@ mci_amyloid_df |>
   labs(
     title = "Amyloid Beta Ratio/Years Boxplots",
    x = "Years",
-    y = "Amyloid Beta Ratio")+
-   viridis::scale_color_viridis(
-    name = "Years", 
-    discrete = TRUE
-  )
+    y = "Amyloid Beta Ratio")
 ```
 
 <img src="Homework2_files/figure-gfm/unnamed-chunk-7-1.png" width="90%" style="display: block; margin: auto;" />
@@ -338,8 +334,8 @@ all_participants_df =
             keep = T) # keep both id and study_id for comparision
 ```
 
-Then, 80 participants are only in the amyloid datset, 8 participants are
-only in the baseline datset.  
+Then, 80 participants are only in the amyloid dataset, 8 participants
+are only in the baseline dataset.  
 Retain only the participants who appear in both datasets.
 
 ``` r

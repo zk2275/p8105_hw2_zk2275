@@ -52,7 +52,7 @@ scale_fill_discrete = scale_fill_viridis_d
 
 # Problem 1
 
-We clean the 538 `pols` data, which provides information on the number of national politicians who are democratic or republican at any given time. There are some values for which `prez_gop` is `2` -- these are months in which Ford became President following Nixon's resignation. In the new `president` variable created as part of our data cleaning, we code these as `rep`` (same as values when `prez_gop` is `1`).
+We clean the 538 `pols` data, which provides information on the number of national politicians who are democratic or republican at any given time. There are some values for which `prez_gop` is `2` -- these are months in which Ford became President following Nixon's resignation. In the new `president` variable created as part of our data cleaning, we code these as `rep`` (same as values when `prez_gop` is `1`). 
 
 prez_gop: indicator of whether the president was republican on the associated date (1 = yes, 0 = no)
 gov_gop: the number of republican governors on the associated date
