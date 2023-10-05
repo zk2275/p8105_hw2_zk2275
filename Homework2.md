@@ -1,14 +1,13 @@
 Homework2
 ================
 Zhuodiao Kuang
-2023-10-03
-
-# Load libraries
+2023-10-04
 
 ``` r
 library(tidyverse)
 library(dplyr)
 library(readxl)
+library(knitr)
 ```
 
 # Problem 1
@@ -243,7 +242,7 @@ Wheel” data set contains 155 observations of 12 variables from July,
 2021 to June, 2023.  
 For the resulting datasheet, it contains 845 observations of 15
 variables, among which the `name` variable marks the trash wheel’s name
-Mr_trash_wheel, Professory), Gwynnda.
+Mr_trash_wheel, Professory, Gwynnda.
 
 It can be concluded that the total weight of trash collected by
 Professor Trash Wheel is 216.26 and the total number of cigarette butts
@@ -251,19 +250,13 @@ collected by Gwynnda in July of 2021 is 16300.
 
 # Problem 3
 
-Import, clean, and tidy the dataset of baseline demographics.
-
 ``` r
 mci_baseline_df = 
   read_csv("./data_mci/MCI_baseline.csv", skip = 1, # skip the first row
            na = c(".", "NA")) |> # treat the missing value as NA
   janitor::clean_names() |> 
   mutate(
-    sex = case_match(
-      sex,
-      1 ~ "Male",
-      0 ~ "Female"
-    ),
+    sex = if_else(sex == 0, 'female', 'male'),
     apoe4 = case_match(
       apoe4,
       1 ~ "APOE4 carrier",
@@ -284,11 +277,10 @@ After cleaning, the data set contains 479 observations of 6 variables.
 From the data set, it could be concluded that 479 participants in total
 were recruited, among which 479 participants met the criteria, and 93
 develop MCI. After the participants who do not meet the criteria are
-removed, the average baseline age is 65.03, and 30% of women in the
+removed, the average baseline age is 65.03, and NaN% of women in the
 study are APOE4 carriers.
 
-Similarly, import, clean, and tidy the dataset of longitudinally
-observed biomarker values.
+### Similarly, import, clean, and tidy the dataset of longitudinally observed biomarker values.
 
 ``` r
 mci_amyloid_df = 
@@ -299,34 +291,42 @@ mci_amyloid_df =
     baseline:time_8,
     names_to = "time_in_years",
     names_prefix = "time_",
-    values_to = "amyloid_beta_42_40_ratio"
+    values_to = "ABR"
   ) |> 
   mutate( # change baseline to 0 year
     time_in_years = replace(time_in_years, time_in_years == "baseline", 0),
-    amyloid_beta_42_40_ratio = as.numeric(amyloid_beta_42_40_ratio)
+    ABR = as.numeric(ABR)
   )
 ```
 
-For the data cleaning, first I skipped the first row which contains
+For the data cleaning, first, I skipped the first row, which contains
 notes for the columns, and treated “Na” and “NA” both as NA values
-because there is an “Na” value inside the “Baseline” variable. Then I
+because there is a “Na” value inside the “Baseline” variable. Then, I
 converted the five variables measuring the ratio at a given time into
-two variables named “time_in_years” and “amyloid_beta_42_40_ratio”.
-After cleaning, the data set contains 2435 observations of 3 variables.
-The ratio distribution for different years is illustrated below:
+two variables named “time_in_years” and “ABR”. After cleaning, the data
+set contains 2435 observations of 3 variables. The ratio distribution
+for different years is illustrated below:
 
 ``` r
 mci_amyloid_df |> 
-  ggplot(aes(y = amyloid_beta_42_40_ratio, x = time_in_years)) + 
-  geom_boxplot()
+  ggplot(aes(y = ABR, x = time_in_years)) + 
+  geom_boxplot()+
+  labs(
+    title = "Amyloid Beta Ratio/Years Boxplots",
+   x = "Years",
+    y = "Amyloid Beta Ratio")+
+   viridis::scale_color_viridis(
+    name = "Years", 
+    discrete = TRUE
+  )
 ```
 
-<img src="Homework2_files/figure-gfm/unnamed-chunk-8-1.png" style="display: block; margin: auto;" />
+<img src="Homework2_files/figure-gfm/unnamed-chunk-7-1.png" width="90%" style="display: block; margin: auto;" />
 
 From the boxplot, it could be concluded that as the number of years
 increases, the ratio tends to drop in overall.
 
-## Compare the two datasets.
+### Compare the two datasets.
 
 Check whether some participants appear in only the baseline or amyloid
 datasets.
@@ -352,6 +352,6 @@ write_csv(both_participants_df, "./data_mci/mci_result.csv") # export
 The result contains 2355 observations of 8 variables related to the
 participants’ baseline demographics and amyloid $\beta$ 42/40 ratio
 measured every two years from the baseline to the eighth year. Among the
-471 participants, 205 are female, 142 are APOE4 carriers. The average
-current age at baseline is 65.05, and the average length of education at
-baseline is 16.38 years.
+471 participants, 0 are female, 142 are APOE4 carriers. The average
+current age at baseline is 65.05 (years old), and the average length of
+education at baseline is 16.38 years.
